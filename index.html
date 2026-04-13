@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPNM Clinical Service Management System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar for beautiful UX */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation & Branding -->
+    <header class="bg-gradient-to-r from-red-900 via-red-800 to-rose-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Branding -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white p-2 rounded-full flex items-center justify-center w-10 h-10 shadow-inner">
+                        <i class="fa-solid fa-staff-snake text-red-800 text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold leading-tight">UPNM Clinical Services</h1>
+                        <p class="text-xs text-red-200">Integrated Management System • v1.0</p>
+                    </div>
+                </div>
+
+                <!-- Emergency Button & Notification -->
+                <div class="flex items-center space-x-6">
+                    <!-- Emergency Alert Button -->
+                    <button onclick="triggerEmergencyModal()" class="animate-pulse bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-md flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-truck-medical"></i>
+                        <span>Emergency Booking</span>
+                    </button>
+
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="relative p-2 text-red-100 hover:text-white transition">
+                            <i class="fa-solid fa-bell text-xl"></i>
+                            <span id="notif-badge" class="absolute top-1 right-1 bg-yellow-400 text-red-900 text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">3</span>
+                        </button>
+                        <!-- Notification Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-gray-700 text-sm">Notifications</span>
+                                <button onclick="clearNotifications()" class="text-xs text-red-600 hover:underline">Clear all</button>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto" id="notif-list">
+                                <!-- Notifications dynamically inserted here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Selector (Demonstration Switcher) -->
+                    <div class="flex items-center bg-red-950/40 border border-red-700/50 rounded-lg p-1 text-sm">
+                        <span class="text-red-200 text-xs px-2 uppercase tracking-wide font-medium">Role:</span>
+                        <select id="roleSelector" onchange="changeRole()" class="bg-transparent text-white font-semibold py-1 pr-6 pl-2 outline-none cursor-pointer">
+                            <option value="student" class="bg-gray-800 text-white">🎓 Student (Patient)</option>
+                            <option value="staff" class="bg-gray-800 text-white">👨‍🏫 Staff / Lecturer</option>
+                            <option value="doctor" class="bg-gray-800 text-white">🩺 Doctor</option>
+                            <option value="nurse" class="bg-gray-800 text-white">👩‍⚕️ Nurse</option>
+                            <option value="admin" class="bg-gray-800 text-white">🛠️ Admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-6 flex-grow">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-64 bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col justify-between self-start sticky top-24">
+            <nav class="space-y-1">
+                <!-- Tabs -->
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition bg-red-50 text-red-800">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Dashboard & Queue</span>
+                </button>
+                <button onclick="switchTab('appointments')" id="btn-appointments" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-calendar-check w-5"></i>
+                    <span>Appointments</span>
+                </button>
+                <button onclick="switchTab('medical-records')" id="btn-medical-records" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-file-medical w-5"></i>
+                    <span>Medical Records</span>
+                </button>
+                <button onclick="switchTab('consultation')" id="btn-consultation" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-stethoscope w-5"></i>
+                    <span>Consultation Room</span>
+                </button>
+                <button onclick="switchTab('pharmacy')" id="btn-pharmacy" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-pills w-5"></i>
+                    <span>Pharmacy System</span>
+                </button>
+                <button onclick="switchTab('lab')" id="btn-lab" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-flask w-5"></i>
+                    <span>Lab Test & Reports</span>
+                </button>
+                <button onclick="switchTab('docs')" id="btn-docs" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50 border-t border-gray-100 mt-4 pt-4">
+                    <i class="fa-solid fa-book-open w-5"></i>
+                    <span>Tech Stack & Docs</span>
+                </button>
+            </nav>
+
+            <!-- Quick Action & Patient QR check-in -->
+            <div class="mt-8 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
+                <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2"></i>
+                <h4 class="text-xs font-bold text-gray-700">Self Check-in Kiosk</h4>
+                <p class="text-xs text-gray-500 mt-1">Scan QR code at the clinic entrance to check-in instantly.</p>
+                <button onclick="simulateQRCheckIn()" class="mt-3 w-full bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition">
+                    Simulate Check-in
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow space-y-6">
+
+            <!-- 1. DASHBOARD & QUEUE VIEW -->
+            <section id="view-dashboard" class="space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-red-800 to-rose-700 text-white rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <span class="bg-red-950/40 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-red-200">UPNM Medical Center</span>
+                        <h2 class="text-2xl font-bold mt-2">Welcome, <span id="current-user-name">Ahmad Zulkarnain</span></h2>
+                        <p class="text-red-100 text-sm mt-1">University Defense & Health Clinical Services Portal</p>
+                    </div>
+                    <!-- Quick Stats Badges -->
+                    <div class="flex gap-4">
+                        <div class="bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/20">
+                            <span class="block text-xs text-red-200 uppercase">Estimated Wait</span>
+                            <span class="text-2xl font-bold" id="est-wait">15 Mins</span>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/20">
+                            <span class="block text-xs text-red-200 uppercase">Your Queue No</span>
+                            <span class="text-2xl font-bold" id="your-queue-no">Q-104</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin & Doctors Overview Panel (Only shown if Admin/Doctor/Nurse) -->
+                <div id="admin-stats-panel" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center space-x-4">
+                        <div class="bg-blue-50 text-blue-600 p-3 rounded-lg text-xl"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold">Total Patients Today</p>
+                            <h4 class="text-2xl font-bold text-gray-800">124</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center space-x-4">
+                        <div class="bg-green-50 text-green-600 p-3 rounded-lg text-xl"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold">Doctors on Duty</p>
+                            <h4 class="text-2xl font-bold text-gray-800">5</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center space-x-4">
+                        <div class="bg-yellow-50 text-yellow-600 p-3 rounded-lg text-xl"><i class="fa-solid fa-stopwatch"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold">Avg. Wait Time</p>
+                            <h4 class="text-2xl font-bold text-gray-800">12 min</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center space-x-4">
+                        <div class="bg-red-50 text-red-600 p-3 rounded-lg text-xl"><i class="fa-solid fa-bed-pulse"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold">Beds Occupied</p>
+                            <h4 class="text-2xl font-bold text-gray-800">2 / 10</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Queue Monitor & Symptom Checker -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Live Queue System -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm md:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-gray-800">Live Queue Monitor</h3>
+                            <span class="flex items-center text-xs text-green-600 font-semibold animate-pulse">
+                                <span class="h-2 w-2 bg-green-600 rounded-full mr-2"></span> LIVE
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="text-xs text-gray-500 font-semibold uppercase">Room 1 (Consultation)</span>
+                                <div class="text-3xl font-extrabold text-red-800 mt-2">Q-101</div>
+                                <span class="text-xs text-green-600">Dr. Sarah Mansor</span>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="text-xs text-gray-500 font-semibold uppercase">Room 2 (Medical)</span>
+                                <div class="text-3xl font-extrabold text-red-800 mt-2">Q-102</div>
+                                <span class="text-xs text-green-600">Dr. Faizal Ramli</span>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="text-xs text-gray-500 font-semibold uppercase">Pharmacy / Collection</span>
+                                <div class="text-3xl font-extrabold text-red-800 mt-2">P-045</div>
+                                <span class="text-xs text-green-600">Dispensing</span>
+                            </div>
+                        </div>
+
+                        <!-- Up next Table -->
+                        <h4 class="font-bold text-sm text-gray-700 mt-6 mb-3">Up Next (Queue Line)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-600 font-semibold text-xs uppercase">
+                                    <tr>
+                                        <th class="py-2 px-3">Queue No</th>
+                                        <th class="py-2 px-3">Patient Name</th>
+                                        <th class="py-2 px-3">Assigned To</th>
+                                        <th class="py-2 px-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100" id="queue-table-body">
+                                    <!-- Queue populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- AI / Form Based Symptom Checker -->
+                    <div class="bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 rounded-xl shadow-sm flex flex-col justify-between">
+                        <div>
+                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold uppercase">Basic Symptom Checker</span>
+                            <h3 class="font-bold text-lg mt-3">Feeling Unwell?</h3>
+                            <p class="text-slate-300 text-sm mt-1 leading-relaxed">Check your symptoms before booking an appointment to get illness insights and emergency priority classification.</p>
+                            
+                            <div class="mt-4 space-y-3">
+                                <div>
+                                    <label class="text-xs text-slate-400">Primary Symptom</label>
+                                    <select id="symptom-primary" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2 mt-1 border border-slate-600 outline-none">
+                                        <option value="fever">High Fever (>38.5°C)</option>
+                                        <option value="cough">Persistent Cough / Sore Throat</option>
+                                        <option value="stomach">Stomach Pain / Diarrhea</option>
+                                        <option value="sprain">Muscle Sprain / Joint Pain</option>
+                                        <option value="breathing">Difficulty Breathing / Chest Pain</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-400">Duration</label>
+                                    <select id="symptom-duration" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2 mt-1 border border-slate-600 outline-none">
+                                        <option value="today">Started Today</option>
+                                        <option value="few-days">2 - 3 Days</option>
+                                        <option value="week">More than a week</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="checkSymptoms()" class="w-full bg-red-600 hover:bg-red-500 text-white text-sm font-bold py-3 rounded-lg shadow-md mt-6 transition">
+                            Run Analysis
+                        </button>
+
+                        <!-- Assessment Result -->
+                        <div id="symptom-result" class="hidden mt-4 p-3 bg-slate-700/50 rounded-lg text-sm border border-slate-600">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- 2. APPOINTMENT BOOKING (CORE SYSTEM) -->
+            <section id="view-appointments" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-800">Book an Appointment</h3>
+                    <p class="text-sm text-gray-500">Select an available doctor, date, and preferred time slot.</p>
+                    
+                    <form onsubmit="handleBooking(event)" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Left Column -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Patient Full Name</label>
+                                <input type="text" id="book-name" required value="Ahmad Zulkarnain" class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Student / Staff ID</label>
+                                <input type="text" id="book-id" required value="UPNM202401" class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Illness Type / Department</label>
+                                <select id="book-illness" required class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                                    <option value="General Checkup">General Consultation / Fever / Cold</option>
+                                    <option value="Dental">Dental Care</option>
+                                    <option value="Physiotherapy">Sports Injury / Physiotherapy</option>
+                                    <option value="Dietetics">Dietetics & Nutrition</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Select Doctor</label>
+                                <select id="book-doctor" required class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                                    <option value="Dr. Sarah Mansor">Dr. Sarah Mansor (General Practice)</option>
+                                    <option value="Dr. Faizal Ramli">Dr. Faizal Ramli (Dental)</option>
+                                    <option value="Dr. Aishah Tan">Dr. Aishah Tan (Physio / Orthopedics)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Select Date</label>
+                                <input type="date" id="book-date" required class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Select Time Slot (Double Booking Prevented)</label>
+                                <div class="grid grid-cols-3 gap-2 mt-2" id="time-slot-container">
+                                    <button type="button" onclick="selectTimeSlot('09:00 AM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">09:00 AM</button>
+                                    <button type="button" onclick="selectTimeSlot('10:00 AM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">10:00 AM</button>
+                                    <button type="button" onclick="selectTimeSlot('11:00 AM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">11:00 AM</button>
+                                    <button type="button" onclick="selectTimeSlot('02:00 PM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">02:00 PM</button>
+                                    <button type="button" onclick="selectTimeSlot('03:00 PM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">03:00 PM</button>
+                                    <button type="button" onclick="selectTimeSlot('04:00 PM')" class="time-slot p-2 text-xs border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-600 transition font-medium">04:00 PM</button>
+                                </div>
+                                <input type="hidden" id="selected-time" required>
+                            </div>
+
+                            <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-blue-800 text-xs">
+                                <i class="fa-solid fa-circle-info mr-1"></i>
+                                Double bookings are automatically rejected. Validating slots against the live database index.
+                            </div>
+
+                            <button type="submit" class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow transition">
+                                Confirm & Get Queue Number
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Past / Scheduled Appointments -->
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Your Scheduled Appointments</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 text-gray-600 font-semibold text-xs uppercase">
+                                <tr>
+                                    <th class="py-3 px-4">Date & Time</th>
+                                    <th class="py-3 px-4">Doctor</th>
+                                    <th class="py-3 px-4">Illness / Department</th>
+                                    <th class="py-3 px-4">Queue No</th>
+                                    <th class="py-3 px-4">Status</th>
+                                    <th class="py-3 px-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100" id="appointments-tbody">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. MEDICAL RECORDS SYSTEM -->
+            <section id="view-medical-records" class="hidden space-y-6">
+                <!-- Patient Search & Info Header -->
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-100 p-4 rounded-full text-2xl text-gray-400">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Ahmad Zulkarnain</h3>
+                            <p class="text-sm text-gray-500">Student ID: UPNM202401 • Age: 22 • Faculty: Engineering</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="bg-red-100 text-red-800 text-xs px-3 py-1.5 rounded-full font-bold">Blood Group: B+</span>
+                        <span class="bg-amber-100 text-amber-800 text-xs px-3 py-1.5 rounded-full font-bold">Allergy: Penicillin</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Past Visits / Diagnosis -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm md:col-span-2">
+                        <h4 class="font-bold text-gray-800 mb-4">Diagnosis & Medical History</h4>
+                        <div class="space-y-4">
+                            <!-- History Card -->
+                            <div class="border-l-4 border-red-800 pl-4 py-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-gray-500">12 October 2025</span>
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-medium">Fully Recovered</span>
+                                </div>
+                                <h5 class="font-bold text-gray-800 text-base mt-1">Acute Bronchitis</h5>
+                                <p class="text-sm text-gray-600 mt-1">Patient experienced severe coughing and low-grade fever. Treated with Azithromycin and cough syrup.</p>
+                                <span class="text-xs text-gray-400 block mt-2">Attended by: Dr. Sarah Mansor</span>
+                            </div>
+
+                            <hr class="border-gray-100">
+
+                            <!-- History Card -->
+                            <div class="border-l-4 border-red-800 pl-4 py-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-gray-500">05 June 2025</span>
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-medium">Fully Recovered</span>
+                                </div>
+                                <h5 class="font-bold text-gray-800 text-base mt-1">Muscle Sprain (Ankle)</h5>
+                                <p class="text-sm text-gray-600 mt-1">Injury during military orientation/sports. R.I.C.E protocol instructed. Painkillers prescribed.</p>
+                                <span class="text-xs text-gray-400 block mt-2">Attended by: Dr. Aishah Tan</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vaccinations & Alerts -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                            <h4 class="font-bold text-gray-800 mb-4">Vaccination Records</h4>
+                            <ul class="space-y-3">
+                                <li class="flex justify-between text-sm">
+                                    <span class="text-gray-600">COVID-19 Booster</span>
+                                    <span class="font-semibold text-green-600"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                                </li>
+                                <li class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Hepatitis B</span>
+                                    <span class="font-semibold text-green-600"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                                </li>
+                                <li class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Influenza (Annual)</span>
+                                    <span class="font-semibold text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i> Due Soon</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Emergency Medical Instructions -->
+                        <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
+                            <h4 class="font-bold text-red-800 text-sm">Emergency Protocols</h4>
+                            <p class="text-xs text-red-600 mt-1">If presenting severe anaphylaxis from Penicillin, immediately administer Epinephrine 0.3mg IM.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CONSULTATION ROOM (Doctor View) -->
+            <section id="view-consultation" class="hidden space-y-6">
+                <!-- Consultation Controls -->
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-800">Medical Consultation Dashboard</h3>
+                    <p class="text-sm text-gray-500">Record diagnoses, prescribe medications, and order tests. Authorized for Doctors & Nurses only.</p>
+
+                    <form onsubmit="handleConsultationSubmit(event)" class="mt-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Patient ID / Name</label>
+                                <input type="text" id="consult-patient" required placeholder="Select patient or search by ID..." value="Ahmad Zulkarnain (UPNM202401)" class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Primary Diagnosis</label>
+                                <input type="text" id="consult-diagnosis" required placeholder="e.g. Acute Tonsillitis, Sprained Wrist..." class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">Prescription / Medications</label>
+                            <input type="text" id="consult-prescription" required placeholder="e.g. Paracetamol 500mg (2x daily), Amoxicillin 500mg..." class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">Medical Notes & Advice</label>
+                            <textarea id="consult-notes" rows="3" placeholder="Diet instructions, rest recommendations, follow-ups..." class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm"></textarea>
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+                            <label class="flex items-center text-xs text-gray-600 space-x-2">
+                                <input type="checkbox" id="consult-mc" class="rounded">
+                                <span>Issue Medical Certificate (MC)</span>
+                            </label>
+
+                            <button type="submit" class="bg-green-600 hover:bg-green-500 text-white font-bold px-6 py-2.5 rounded-lg shadow transition text-sm">
+                                Save Consultation & Send to Pharmacy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 5. PHARMACY SYSTEM -->
+            <section id="view-pharmacy" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Dispense Prescriptions Table -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-gray-800 text-lg mb-4">Pending Prescriptions (Dispensing Desk)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-600 font-semibold text-xs uppercase">
+                                    <tr>
+                                        <th class="py-3 px-4">Patient ID</th>
+                                        <th class="py-3 px-4">Prescription Details</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100" id="pharmacy-tbody">
+                                    <tr>
+                                        <td class="py-3 px-4 font-semibold">UPNM202401</td>
+                                        <td class="py-3 px-4">Paracetamol 500mg, Amoxicillin</td>
+                                        <td class="py-3 px-4"><span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Pending</span></td>
+                                        <td class="py-3 px-4">
+                                            <button onclick="dispenseMedicine(this)" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded font-bold transition">Dispense</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Medicine Inventory -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 text-lg mb-4">Inventory Status</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center text-sm border-b pb-2">
+                                <div>
+                                    <span class="font-semibold text-gray-700 block">Paracetamol 500mg</span>
+                                    <span class="text-xs text-gray-400">Box of 100</span>
+                                </div>
+                                <span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded text-xs">85% Stock</span>
+                            </div>
+
+                            <div class="flex justify-between items-center text-sm border-b pb-2">
+                                <div>
+                                    <span class="font-semibold text-gray-700 block">Amoxicillin 500mg</span>
+                                    <span class="text-xs text-gray-400">Antibiotics</span>
+                                </div>
+                                <span class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-xs">40% Stock</span>
+                            </div>
+
+                            <div class="flex justify-between items-center text-sm border-b pb-2">
+                                <div>
+                                    <span class="font-semibold text-gray-700 block">Ibuprofen 400mg</span>
+                                    <span class="text-xs text-gray-400">Painkillers</span>
+                                </div>
+                                <span class="bg-red-100 text-red-800 font-bold px-2 py-1 rounded text-xs">15% Low</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. LAB TEST & REPORTS -->
+            <section id="view-lab" class="hidden space-y-6">
+                <!-- Lab Request / File Upload Form -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 text-lg mb-4">Upload Lab Results / X-Ray</h3>
+                        <form onsubmit="handleLabUpload(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Select Patient</label>
+                                <input type="text" id="lab-patient" required value="Ahmad Zulkarnain" class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Test Type</label>
+                                <select id="lab-type" class="w-full mt-1 p-2.5 border border-gray-300 rounded-lg text-sm">
+                                    <option>Full Blood Count (FBC)</option>
+                                    <option>Urine Analysis</option>
+                                    <option>Chest X-Ray</option>
+                                    <option>Dengue NS1 Antigen</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Upload File (PDF/JPG)</label>
+                                <input type="file" required class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
+                                Upload Result & Notify Patient
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Available Lab Records -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 text-lg mb-4">Lab Reports Repository</h3>
+                        <div class="space-y-3" id="lab-reports-list">
+                            <!-- Sample Record -->
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-file-pdf text-red-600 text-xl"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">FBC_Report_UPNM202401.pdf</p>
+                                        <span class="text-xs text-gray-500">Uploaded: 10 Oct 2025 • FBC</span>
+                                    </div>
+                                </div>
+                                <button onclick="alert('Downloading lab report...')" class="text-xs text-blue-600 hover:underline font-semibold">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. TECHNICAL REQUIREMENTS, DATABASE SCHEMA & CODE (As per prompt output instructions) -->
+            <section id="view-docs" class="hidden space-y-6">
+                <!-- System Architecture & Folders -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-sitemap mr-2 text-red-800"></i> 1. System Architecture</h3>
+                        <p class="text-sm text-gray-600 mt-2 leading-relaxed">
+                            A lightweight Client-Server model tailored for student projects. Front-end pages request data from a Node.js REST API using the <code>fetch()</code> API. Authentication uses session/JWT validation. Data is stored persistently in a relational MySQL database.
+                        </p>
+
+                        <h4 class="font-bold text-gray-800 mt-6 mb-2 text-sm">2. Folder Structure</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded-lg text-xs code-font overflow-x-auto leading-loose">
+/upnm-clinic-system
+│── /backend
+│   ├── /config
+│   │   └── db.js         # MySQL configuration
+│   ├── /controllers
+│   │   └── authController.js
+│   │   └── appointmentController.js
+│   ├── /routes
+│   │   └── api.js        # REST API endpoints
+│   ├── server.js         # Entry point (Express)
+│
+└── /frontend
+    ├── index.html        # Main dashboard / Booking
+    ├── login.html
+    ├── /css
+    │   └── styles.css
+    └── /js
+        └── app.js        # Vanilla JS & Fetch calls</pre>
+                    </div>
+
+                    <!-- Database Schema -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-database mr-2 text-red-800"></i> 3. Database Schema (MySQL)</h3>
+                        
+                        <div class="space-y-4 mt-4">
+                            <div>
+                                <span class="bg-red-800 text-white font-bold text-xs px-2 py-0.5 rounded">USERS</span>
+                                <pre class="bg-gray-50 border p-3 rounded text-xs code-font text-gray-700 mt-1">
+id (PK, INT)
+full_name (VARCHAR)
+email (VARCHAR, UNIQUE)
+password_hash (VARCHAR)
+role (ENUM: 'student','staff','doctor','nurse','admin')</pre>
+                            </div>
+
+                            <div>
+                                <span class="bg-blue-800 text-white font-bold text-xs px-2 py-0.5 rounded">APPOINTMENTS</span>
+                                <pre class="bg-gray-50 border p-3 rounded text-xs code-font text-gray-700 mt-1">
+id (PK, INT)
+patient_id (FK -> users.id)
+doctor_id (FK -> users.id)
+date (DATE)
+time_slot (VARCHAR)
+status (ENUM: 'scheduled','completed','cancelled')</pre>
+                            </div>
+
+                            <div>
+                                <span class="bg-green-800 text-white font-bold text-xs px-2 py-0.5 rounded">MEDICAL_RECORDS</span>
+                                <pre class="bg-gray-50 border p-3 rounded text-xs code-font text-gray-700 mt-1">
+id (PK, INT)
+patient_id (FK -> users.id)
+diagnosis (TEXT)
+prescription (TEXT)
+doctor_notes (TEXT)
+created_at (TIMESTAMP)</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API & Node.js Code Samples -->
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-code mr-2 text-red-800"></i> 4. REST API Endpoints</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div class="border p-3 rounded-lg bg-gray-50">
+                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                                <span class="text-sm font-bold ml-2">/api/auth/login</span>
+                                <p class="text-xs text-gray-500 mt-1">Authenticates users & returns a session token or user role object.</p>
+                            </div>
+                            <div class="border p-3 rounded-lg bg-gray-50">
+                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                                <span class="text-sm font-bold ml-2">/api/appointments</span>
+                                <p class="text-xs text-gray-500 mt-1">Books a new appointment. Checks for double-booking conflicts.</p>
+                            </div>
+                            <div class="border p-3 rounded-lg bg-gray-50">
+                                <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-bold">GET</span>
+                                <span class="text-sm font-bold ml-2">/api/appointments/:id</span>
+                                <p class="text-xs text-gray-500 mt-1">Retrieves appointments mapped to a user ID or role filter.</p>
+                            </div>
+                            <div class="border p-3 rounded-lg bg-gray-50">
+                                <span class="bg-amber-600 text-white px-2 py-0.5 rounded text-xs font-bold">PUT</span>
+                                <span class="text-sm font-bold ml-2">/api/appointments/reschedule</span>
+                                <p class="text-xs text-gray-500 mt-1">Updates the appointment date & time slot.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Express Sample Code -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-brands fa-node-js mr-2 text-green-700"></i> 5. Sample Backend Code (Node.js/Express)</h3>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg text-xs code-font overflow-x-auto leading-relaxed mt-3">
+const express = require('express');
+const mysql = require('mysql2');
+const app = express();
+
+app.use(express.json());
+
+// MySQL Database Connection Pool
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'upnm_clinic'
+});
+
+// Endpoint: Book Appointment
+app.post('/api/appointments', (req, res) => {
+    const { patientId, doctorId, date, timeSlot, illnessType } = req.body;
+
+    // 1. Double Booking Check Query
+    const checkQuery = `SELECT * FROM appointments WHERE doctor_id = ? AND date = ? AND time_slot = ?`;
+    
+    pool.query(checkQuery, [doctorId, date, timeSlot], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length > 0) {
+            return res.status(409).json({ message: "Time slot already booked!" });
+        }
+
+        // 2. Insert Booking
+        const insertQuery = `INSERT INTO appointments (patient_id, doctor_id, date, time_slot, status) VALUES (?, ?, ?, ?, 'scheduled')`;
+        pool.query(insertQuery, [patientId, doctorId, date, timeSlot], (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.status(201).json({ message: "Booking successful!", id: result.insertId });
+        });
+    });
+});
+
+app.listen(3000, () => console.log('UPNM Clinic Server running on port 3000'));</pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Emergency Confirmation Modal -->
+    <div id="emergency-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl scale-100 transition-all">
+            <div class="text-center">
+                <div class="bg-red-100 text-red-600 p-4 rounded-full inline-flex items-center justify-center text-4xl mb-4 animate-bounce">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">Emergency Booking!</h3>
+                <p class="text-sm text-gray-500 mt-2">Triggering an emergency booking will override the queue line and page immediate assistance to the triage desk.</p>
+            </div>
+            
+            <div class="mt-6 flex gap-3">
+                <button onclick="closeEmergencyModal()" class="w-1/2 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button onclick="confirmEmergency()" class="w-1/2 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition">
+                    Alert Triage Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Functional Logic -->
+    <script>
+        // 1. Core State & Initial Sample Database
+        let appointments = [
+            { id: 1, date: "2026-03-01", time: "09:00 AM", doctor: "Dr. Sarah Mansor", illness: "General Checkup", queueNo: "Q-104", status: "Scheduled" }
+        ];
+
+        let notifications = [
+            "Your appointment for Dental is confirmed on 2026-03-01.",
+            "Medicine available for pickup at the dispensing counter.",
+            "System reminder: Bring your student card during appointments."
+        ];
+
+        // Ensure Date Input defaults to tomorrow
+        const dateInput = document.getElementById('book-date');
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateInput.valueAsDate = tomorrow;
+
+        // 2. Navigation & Tabs
+        function switchTab(tabId) {
+            // Hide all views
+            document.querySelectorAll('main > section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Show targeted view
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+
+            // Reset tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-50";
+            });
+            // Highlight active tab
+            document.getElementById('btn-' + tabId).className = "tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition bg-red-50 text-red-800";
+        }
+
+        // 3. Select Time Slot Logic
+        function selectTimeSlot(time) {
+            document.querySelectorAll('.time-slot').forEach(btn => {
+                btn.classList.remove('bg-red-800', 'text-white', 'border-red-800');
+                btn.classList.add('border-gray-300');
+            });
+            
+            // Find clicked button and highlight
+            const selectedBtn = Array.from(document.querySelectorAll('.time-slot')).find(b => b.innerText === time);
+            if (selectedBtn) {
+                selectedBtn.classList.add('bg-red-800', 'text-white', 'border-red-800');
+            }
+            document.getElementById('selected-time').value = time;
+        }
+
+        // 4. Handle Appointment Booking Submission
+        function handleBooking(event) {
+            event.preventDefault();
+            const timeSlot = document.getElementById('selected-time').value;
+            const doctor = document.getElementById('book-doctor').value;
+            const date = document.getElementById('book-date').value;
+            const illness = document.getElementById('book-illness').value;
+
+            if (!timeSlot) {
+                alert("Please select a time slot.");
+                return;
+            }
+
+            // Check for double booking
+            const doubleBook = appointments.find(a => a.doctor === doctor && a.date === date && a.time === timeSlot);
+            if (doubleBook) {
+                alert("Error: This time slot has already been booked for " + doctor + ". Double-booking prevented.");
+                return;
+            }
+
+            // Generate Queue No
+            const randomQueue = "Q-" + Math.floor(100 + Math.random() * 900);
+
+            // Add to Database
+            appointments.push({
+                id: Date.now(),
+                date: date,
+                time: timeSlot,
+                doctor: doctor,
+                illness: illness,
+                queueNo: randomQueue,
+                status: "Scheduled"
+            });
+
+            // Notification
+            addNotification(`Booking confirmed! Your queue number is ${randomQueue} with ${doctor}.`);
+
+            // Update UI
+            renderAppointments();
+            switchTab('appointments');
+        }
+
+        // 5. Render Appointments List
+        function renderAppointments() {
+            const tbody = document.getElementById('appointments-tbody');
+            tbody.innerHTML = "";
+
+            appointments.forEach(app => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="py-3 px-4">${app.date} | ${app.time}</td>
+                        <td class="py-3 px-4 font-semibold">${app.doctor}</td>
+                        <td class="py-3 px-4">${app.illness}</td>
+                        <td class="py-3 px-4 font-bold text-red-800">${app.queueNo}</td>
+                        <td class="py-3 px-4">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-semibold">${app.status}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <button onclick="cancelAppointment(${app.id})" class="text-xs text-red-600 hover:underline font-bold">Cancel</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 6. Cancel Appointment
+        function cancelAppointment(id) {
+            if (confirm("Are you sure you want to cancel this appointment?")) {
+                appointments = appointments.filter(a => a.id !== id);
+                renderAppointments();
+                addNotification("Appointment cancelled successfully.");
+            }
+        }
+
+        // 7. Live Queue Rendering
+        function renderQueue() {
+            const queueBody = document.getElementById('queue-table-body');
+            queueBody.innerHTML = `
+                <tr>
+                    <td class="py-2 px-3 font-bold text-red-800">Q-104</td>
+                    <td class="py-2 px-3">Ahmad Zulkarnain</td>
+                    <td class="py-2 px-3">Dr. Sarah Mansor</td>
+                    <td class="py-2 px-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-semibold animate-pulse">Consulting</span></td>
+                </tr>
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-700">Q-105</td>
+                    <td class="py-2 px-3">Siti Aminah</td>
+                    <td class="py-2 px-3">Dr. Faizal Ramli</td>
+                    <td class="py-2 px-3"><span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-semibold">Waiting</span></td>
+                </tr>
+            `;
+        }
+
+        // 8. Notifications System
+        function toggleNotifications() {
+            document.getElementById('notif-dropdown').classList.toggle('hidden');
+        }
+
+        function addNotification(text) {
+            notifications.unshift(text);
+            document.getElementById('notif-badge').innerText = notifications.length;
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const notifList = document.getElementById('notif-list');
+            notifList.innerHTML = "";
+            notifications.forEach(note => {
+                notifList.innerHTML += `<div class="px-4 py-3 border-b border-gray-50 text-xs text-gray-600 leading-normal">${note}</div>`;
+            });
+        }
+
+        function clearNotifications() {
+            notifications = [];
+            document.getElementById('notif-badge').innerText = "0";
+            renderNotifications();
+        }
+
+        // 9. QR Check-in Simulation
+        function simulateQRCheckIn() {
+            alert("QR Code scanned successfully! Patient Ahmad Zulkarnain has been checked-in. Pushing to live queue...");
+            addNotification("Self check-in completed. Please wait for your queue number to be called.");
+        }
+
+        // 10. Role Management & Dynamic UI Access
+        function changeRole() {
+            const role = document.getElementById('roleSelector').value;
+            
+            // Apply access rules/UI hiding based on Role
+            if (role === 'student' || role === 'staff') {
+                document.getElementById('admin-stats-panel').classList.add('hidden');
+            } else {
+                document.getElementById('admin-stats-panel').classList.remove('hidden');
+            }
+
+            // Notification confirming role change
+            addNotification(`Role changed to: ${role.toUpperCase()}`);
+        }
+
+        // 11. Consultation & Pharmacy Submission
+        function handleConsultationSubmit(event) {
+            event.preventDefault();
+            const patient = document.getElementById('consult-patient').value;
+            const diagnosis = document.getElementById('consult-diagnosis').value;
+            const meds = document.getElementById('consult-prescription').value;
+
+            // Send to Pharmacy table
+            document.getElementById('pharmacy-tbody').innerHTML += `
+                <tr>
+                    <td class="py-3 px-4 font-semibold">${patient.split('(')[1]?.replace(')', '') || 'UPNM202611'}</td>
+                    <td class="py-3 px-4">${meds}</td>
+                    <td class="py-3 px-4"><span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Pending</span></td>
+                    <td class="py-3 px-4">
+                        <button onclick="dispenseMedicine(this)" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded font-bold transition">Dispense</button>
+                    </td>
+                </tr>
+            `;
+
+            alert("Consultation recorded successfully! Prescription pushed to Pharmacy.");
+            addNotification("New prescription received at Pharmacy Desk.");
+        }
+
+        // 12. Pharmacy Medicine Dispensing
+        function dispenseMedicine(btn) {
+            btn.parentElement.previousElementSibling.innerHTML = `<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">Collected</span>`;
+            btn.innerText = "Dispensed";
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            addNotification("Medicine dispensed to patient successfully.");
+        }
+
+        // 13. Lab Result Uploading
+        function handleLabUpload(event) {
+            event.preventDefault();
+            const patient = document.getElementById('lab-patient').value;
+            const type = document.getElementById('lab-type').value;
+
+            document.getElementById('lab-reports-list').innerHTML += `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-file-pdf text-red-600 text-xl"></i>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">${type.replace(/\s+/g, '_')}_Report.pdf</p>
+                            <span class="text-xs text-gray-500">Uploaded: Just Now • ${patient}</span>
+                        </div>
+                    </div>
+                    <button onclick="alert('Downloading report...')" class="text-xs text-blue-600 hover:underline font-semibold">Download</button>
+                </div>
+            `;
+
+            alert("Lab result uploaded successfully!");
+            addNotification(`New lab report available for ${patient}.`);
+        }
+
+        // 14. Emergency Feature
+        function triggerEmergencyModal() {
+            document.getElementById('emergency-modal').classList.remove('hidden');
+        }
+
+        function closeEmergencyModal() {
+            document.getElementById('emergency-modal').classList.add('hidden');
+        }
+
+        function confirmEmergency() {
+            closeEmergencyModal();
+            addNotification("🚨 EMERGENCY ALERT! Code Red triggered. Triage team dispatched immediately.");
+            alert("🚨 EMERGENCY BOOKING PLACED! The Triage unit and assigned doctors have been notified.");
+        }
+
+        // 15. Form Symptom Checker AI Rule Base
+        function checkSymptoms() {
+            const primary = document.getElementById('symptom-primary').value;
+            const duration = document.getElementById('symptom-duration').value;
+            const resBox = document.getElementById('symptom-result');
+
+            let message = "";
+            let priority = "LOW";
+
+            if (primary === "fever" || primary === "breathing") {
+                priority = "HIGH (Immediate Care)";
+                message = "High probability of severe viral/respiratory infection or fever complications. Please proceed to the clinic immediately or trigger the Emergency button below.";
+            } else if (primary === "stomach") {
+                priority = "MEDIUM";
+                message = "Likely food poisoning or acute gastritis. Stay hydrated and schedule a general consultation.";
+            } else {
+                priority = "LOW";
+                message = "Symptoms indicate mild strain or general fatigue. Ensure sufficient rest and book a standard check-up if pain persists.";
+            }
+
+            resBox.classList.remove('hidden');
+            resBox.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-600 pb-2 mb-2">
+                    <span class="text-xs font-bold text-slate-400">PRIORITY CLASSIFICATION</span>
+                    <span class="text-xs bg-red-600 text-white px-2 py-0.5 rounded font-extrabold animate-pulse">${priority}</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-normal">${message}</p>
+            `;
+        }
+
+        // Initialize UI Elements & Lists
+        renderAppointments();
+        renderQueue();
+        renderNotifications();
+        changeRole(); // Trigger initial view rules
+    </script>
+</body>
+</html>
