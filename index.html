@@ -1090,6 +1090,23 @@ app.listen(3000, () => console.log('UPNM Clinic Server running on port 3000'));<
         renderNotifications();
         changeRole(); // Trigger initial view rules
     </script>
+    function saveAppointment() {
+    const name = document.getElementById("name").value;
+    const date = document.getElementById("date").value;
+
+    if (!name || !date) {
+        alert("Please fill all fields!");
+        return;
+    }
+
+    let data = JSON.parse(localStorage.getItem("appointments")) || [];
+
+    data.push({ name, date });
+
+    localStorage.setItem("appointments", JSON.stringify(data));
+
+    alert("Saved!");
+}
 </body>
 </html>
 <!DOCTYPE html>
