@@ -438,29 +438,7 @@
                             </div>
                         </div>
                     </div>
-                    function saveAppointment() {
-    const name = document.getElementById("name").value;
-    const date = document.getElementById("date").value;
-
-    if (!name || !date) {
-        alert("Please fill all fields!");
-        return;
-    }
-
-    // 1️⃣ 先拿旧 data（如果有）
-    let appointments = JSON.parse(localStorage.getItem("appointments")) || [];
-
-    // 2️⃣ 加新的 data
-    appointments.push({
-        name: name,
-        date: date
-    });
-
-    // 3️⃣ 存回去
-    localStorage.setItem("appointments", JSON.stringify(appointments));
-
-    alert("Appointment saved!");
-}
+                    
 
                     <!-- Vaccinations & Alerts -->
                     <div class="space-y-6">
